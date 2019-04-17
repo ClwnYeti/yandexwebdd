@@ -1,10 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-        <title>{{ title }}</title>
-    </head>
-    <body>
+{% extends "base.html" %}
+
+{% block content %}
+<form>
         <h1>Привет, {{ username }}!</h1>
         <a href="/logout">Выйти</a>
          <h1>Пользователи:</h1>
@@ -14,5 +11,5 @@
         <div>{{users[item]}}</div>
     </div>
 {% endfor %}
-    </body>
-</html>
+</form>
+{% endblock %}

@@ -1,19 +1,26 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-        <title>{{ title }}</title>
-    </head>
-    <body>
+{% extends "base.html" %}
+
+{% block content %}
+<form>
         <h1>Привет, {{ username }}!</h1>
         <a href="/logout">Выйти</a>
-    <a href="/add_news">Добавить новость</a>
-{% for item in news %}
-    <div class="alert alert-dark" role="alert">
-        <h2>{{item[2]}}</h2>
-        <div>{{item[3]}}</div>
-        <a href="/delete_news/{{item[0]}}">Удалить новость</a>
-    </div>
+    <a href="/YandexLyceumStudent/{{id}}/add">Отправить посылку</a>
+{% for i in all %}
+        {% if i.status == 'OK' %}
+            <div class="alert alert-success" role="alert">
+            {{i.task}}
+            </div>
+        {% endif %}
+        {% if i.status == 'Error' %}
+            <div class="alert alert-danger" role="alert">
+            <a href="/YandexLyceumStudent/{{id}}/tasks/{{ i.id }}" >{{i.task}}</a>
+            </div>
+        {% endif %}
+                {% if i.status == 'Check' %}
+            <div class="alert alert-dark" role="alert">
+            <a href="/YandexLyceumStudent/{{id}}/tasks/{{ i.id }}">{{i.task}}</a>
+            </div>
+        {% endif %}
 {% endfor %}
-    </body>
-</html>
+</form>
+{% endblock %}

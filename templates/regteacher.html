@@ -40,24 +40,6 @@
                 </div>
             {% endfor %}
         </p>
-        <div class="form-group">
-            {{ form.teacher.label }}<br>
-            {{ form.teacher }}<br>
-            {% for error in form.teacher.errors %}
-                <div class="alert alert-danger" role="alert">
-                    {{ error }}
-                </div>
-            {% endfor %}
-        </div>
-                <div class="form-group">
-            {{ form.year.label }}<br>
-            {{ form.year }}<br>
-            {% for error in form.year.errors %}
-                <div class="alert alert-danger" role="alert">
-                    {{ error }}
-                </div>
-            {% endfor %}
-        </div>
         <p>
             {{ form.password.label }}<br>
             {{ form.password }}<br>
