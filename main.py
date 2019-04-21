@@ -230,7 +230,7 @@ def reg():
 def adm():
 	if 'username' not in session:
 		return redirect('/')
-	if session['username'] != 'admin' or session['user_id'] != 1:
+	if session['class'] != 'Admin' or session['user_id'] != 1:
 		return redirect('/' + session['class'] + '/' + str(session['user_id']))
 	a = YandexLyceumTeacher.query.all()
 	a = [(YandexLyceumStudent.query.filter_by(teacherid=i.id).all(), i) for i in a]
@@ -308,7 +308,7 @@ def ta(s, k):
 def t(s, k):
 	if 'username' not in session:
 		return redirect('/login')
-	if session['user_id'] != s or session['class'] != 'YandexLyceumStudent':
+	if (session['user_id'] != s or session['class'] != 'YandexLyceumStudent') or session['class'] == 'Admin':
 		return redirect('/' + session['class'] + '/' + str(session['user_id']))
 	return render_template('task.html', title='Новости', user_id=s, task=SolutionAttempt.query.filter_by(id=k).first())
 
@@ -320,11 +320,6 @@ def ter(s):
 	if session['user_id'] != s or session['class'] != 'YandexLyceumStudent':
 		return redirect('/' + session['class'] + '/' + str(session['user_id']))
 	return redirect('/YandexLyceumStudent/' + str(s))
-
-
-@app.route("/YandexLyceumStudent/<int:s>/tasks/<int:k>/text", methods=['POST'])
-def tk(s, k):
-	return render_template('task.html', title='Новости', user_id=s, task=SolutionAttempt.query.filter_by(id=k).first())
 
 
 @app.route("/YandexLyceumStudent/<int:s>/tasks/<int:k>/change/text", methods=['GET', 'POST'])
@@ -358,19 +353,6 @@ def terk(s, k):
 	db.session.delete(a)
 	db.session.commit()
 	return redirect('/' + session['class'] + '/' + str(session['user_id']))
-
-@app.route("/YandexLyceumStudent/<int:s>/addimage", methods=['GET', 'POST'])
-def im(s):
-	if 'username' not in session:
-		return redirect('/login')
-	if session['user_id'] != s or session['class'] != 'YandexLyceumStudent':
-		return redirect('/' + session['class'] + '/' + str(session['user_id']))
-	form = AddPForm()
-	if form.validate_on_submit():
-		f = form.content.data
-		f.save('static/img/' + str(s) + form.content.data.split('.'[2]))
-		return redirect('/' + session['class'] + '/' + str(session['user_id']))
-	return render_template('im.html', form=form)
 
 
 @app.route('/YandexLyceumTeacher/<int:s>', methods=['GET', 'POST'])
@@ -410,6 +392,7 @@ def st(s, k):
 	user = YandexLyceumStudent.query.filter_by(id=k).first()
 	return render_template('st.html', user=user,
 	                       all=attempts, id=s)
+
 
 @app.route('/YandexLyceumTeacher/<int:s>/students/<int:k>/tasks/<int:f>/text', methods=['GET', 'POST'])
 def stt(s, k, f):
