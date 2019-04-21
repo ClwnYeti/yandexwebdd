@@ -2,11 +2,8 @@
 
 {% block content %}
 <form>
-        <h1>Привет, {{ user.username }}!</h1>
-        <a href="/logout">Выйти</a>
-    <div class="alert alert-dark" role="alert">Имя: {{ user.name }}</div>
-    <div class="alert alert-dark" role="alert">Фамилия: {{ user.surname }}</div>
-    <a href="/YandexLyceumStudent/{{id}}/add">Отправить посылку</a>
+    <h1 class="alert alert-primary" role="alert">Имя: {{ user.name }}</h1>
+    <h1 class="alert alert-primary" role="alert">Фамилия: {{ user.surname }}</h1>
 {% for i in all %}
         {% if i.status == 'OK' %}
             <div class="alert alert-success" role="alert">
@@ -15,12 +12,12 @@
         {% endif %}
         {% if i.status == 'Error' %}
             <div class="alert alert-danger" role="alert">
-            <a href="/YandexLyceumStudent/{{id}}/tasks/{{ i.id }}" >{{i.task}}</a>
+            <a href="/YandexLyceumTeacher/{{ id }}/students/{{ user.id }}/tasks/{{ i.id }}/text" >{{i.task}}</a>
             </div>
         {% endif %}
                 {% if i.status == 'Check' %}
             <div class="alert alert-warning" role="alert">
-            <a href="/YandexLyceumStudent/{{id}}/tasks/{{ i.id }}">{{i.task}}</a>
+            <a href="/YandexLyceumTeacher/{{ id }}/students/{{ user.id }}/tasks/{{ i.id }}/text" >{{i.task}}</a>
             </div>
         {% endif %}
 {% endfor %}

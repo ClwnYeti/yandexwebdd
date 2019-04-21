@@ -4,12 +4,13 @@
 <form>
         <h1>Привет, {{ username }}!</h1>
         <a href="/logout">Выйти</a>
-         <h1>Пользователи:</h1>
-{% for item in users.keys() %}
-    <div class="alert alert-dark" role="alert">
-        <h2>{{item}}</h2>
-        <div>{{users[item]}}</div>
-    </div>
+        <h1>Учителя:</h1>
+        {% for i in all %}
+        <h2>
+            {{ i[3].name }} {{ i[3].surname }}</h2>
+        <p class="alert alert-info" role="alert">Кол-во учеников: {{ i[0] }}</p>
+        <p class="alert alert-success" role="alert">Проверено задач: {{i[1]}}</p>
+        <p class="alert alert-danger" role="alert">На проверке задач: {{i[2]}}</p>
 {% endfor %}
 </form>
 {% endblock %}

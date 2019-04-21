@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+<form>
+
+        {% if task.status == 'OK' %}
+            <div class="alert alert-success" role="alert">
+                <h1>Задание {{ task.task }}!</h1>
+            </div>
+            <div>{{ task.code }}</div>
+        {% endif %}
+        {% if task.status == 'Error' %}
+            <div class="alert alert-danger" role="alert">
+            <h1>Задание {{ task.task }}!</h1>
+            </div>
+            <div>{{ task.code }}</div>
+        {% endif %}
+        {% if task.status == 'Check' %}
+            <div class="alert alert-warning" role="alert">
+            <h1>Задание {{ task.task }}!</h1>
+            </div>
+            <div>{{ task.code }}</div>
+        {% endif %}
+        <p><a href="/YandexLyceumStudent/{{ user_id}}/tasks/{{ task.id }}/change/text">Изменить</a></p>
+        <p><a href="/YandexLyceumStudent/{{ user_id}}/tasks/{{ task.id }}/delete">Удалить</a></p>
+</form>
+{% endblock %}
