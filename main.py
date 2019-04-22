@@ -19,7 +19,7 @@ app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 class YandexLyceumStudent(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	username = db.Column(db.String(80), unique=True, nullable=False)
-	password = db.Column(db.String(80), unique=True, nullable=False)
+	password = db.Column(db.String(80), unique=False, nullable=False)
 	name = db.Column(db.String(80), unique=False, nullable=False)
 	surname = db.Column(db.String(80), unique=False, nullable=False)
 	email = db.Column(db.String(120), unique=True, nullable=False)
@@ -119,6 +119,15 @@ class RegisterFormSt(FlaskForm):
 	submit = SubmitField('Зарегистрироваться')
 
 
+class RegisterFormTe(FlaskForm):
+	username = StringField('Логин', validators=[DataRequired()])
+	email = StringField('Email', validators=[DataRequired()])
+	name = StringField('Имя', validators=[DataRequired()])
+	surname = StringField('Фамилия', validators=[DataRequired()])
+	password = PasswordField('Пароль', validators=[DataRequired()])
+	submit = SubmitField('Зарегистрироваться')
+
+
 class AddTForm(FlaskForm):
 	title = StringField('Задание', validators=[DataRequired()])
 	content = TextAreaField('Код', validators=[DataRequired()])
@@ -197,7 +206,7 @@ def reg():
 		name = form.name.data
 		surname = form.surname.data
 		email = form.email.data
-		teacher = YandexLyceumTeacher.query.filter_by(id=1).first()
+		teacher = YandexLyceumTeacher.query.filter_by(id=form.teacher.data).first()
 		year = form.year.data
 		user = YandexLyceumStudent.query.filter_by(username=username).all()
 		if user != []:
@@ -216,15 +225,45 @@ def reg():
 									  year=year,
 		                              im='')
 		teacher.YandexLyceumStudent.append(student)
-		student = YandexLyceumStudent.query.filter_by(username=username).all()
 		db.session.commit()
-		student = student[0]
 		session['username'] = username
 		session['class'] = 'YandexLyceumStudent'
 		session['user_id'] = student.id
 		return redirect("/" + session['class'] + "/" + str(session['user_id']))
 	return render_template('reg.html', title='Авторизация', form=form)
 
+
+@app.route('/register/teacher', methods=['GET', 'POST'])
+def re():
+	form = RegisterFormTe()
+	if form.validate_on_submit():
+		username = form.username.data
+		password = form.password.data
+		name = form.name.data
+		surname = form.surname.data
+		email = form.email.data
+		user = YandexLyceumTeacher.query.filter_by(username=username).all()
+		if user != []:
+			form.username.errors = list(form.username.errors)
+			form.username.errors.append('Логин занят')
+		user = YandexLyceumTeacher.query.filter_by(email=email).all()
+		if user != []:
+			form.username.errors = list(form.username.errors)
+			form.email.errors.append('Email занят')
+			return render_template('reg.html', title='Авторизация', form=form)
+		student = YandexLyceumTeacher(username=username,
+									  email=email,
+									  name=name,
+									  surname=surname,
+									  password=password,
+		                              )
+		db.session.add(student)
+		db.session.commit()
+		session['username'] = username
+		session['class'] = 'YandexLyceumTeacher'
+		session['user_id'] = student.id
+		return redirect("/" + session['class'] + "/" + str(session['user_id']))
+	return render_template('regteacher.html', title='Авторизация', form=form)
 
 @app.route('/admin', methods=['GET', 'POST'])
 def adm():
