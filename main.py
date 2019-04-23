@@ -167,7 +167,7 @@ def login(classer):
 				session['username'] = user_name
 				session['class'] = 'YandexLyceumStudent'
 				session['user_id'] = a.id
-			return redirect("/" + session['class'] + "/" + str(session['user_id']))
+			return redirect("/")
 		return render_template('login.html', title='Авторизация', form=form)
 	elif classer == 'admin':
 		form = LoginForm()
@@ -180,7 +180,8 @@ def login(classer):
 				session['username'] = user_name
 				session['class'] = 'Admin'
 				session['user_id'] = a.id
-			return redirect("/admin")
+				return redirect("/admin")
+			return redirect("/")
 		return render_template('loginadmin.html', title='Авторизация', form=form)
 	elif classer == 'teacher':
 			form = LoginForm()
@@ -193,12 +194,15 @@ def login(classer):
 					session['username'] = user_name
 					session['class'] = 'YandexLyceumTeacher'
 					session['user_id'] = a.id
-				return redirect("/" + session['class'] + "/" + str(session['user_id']))
+				return redirect("/")
 			return render_template('login.html', title='Авторизация', form=form)
 
 
 @app.route('/register/student', methods=['GET', 'POST'])
 def reg():
+	a = YandexLyceumTeacher.query.all()
+	a = [(i.id, i.name + ' ' + i.surname) for i in a]
+	RegisterFormSt.teacher = SelectField('Учитель', coerce=int, choices=a)
 	form = RegisterFormSt()
 	if form.validate_on_submit():
 		username = form.username.data
@@ -209,6 +213,11 @@ def reg():
 		teacher = YandexLyceumTeacher.query.filter_by(id=form.teacher.data).first()
 		year = form.year.data
 		user = YandexLyceumStudent.query.filter_by(username=username).all()
+		if email.find('@') == -1 or email.find('@') == 0 or  email.find('@') == len(email) - 1\
+			or email.find('.') == -1 or email.find('.') == 0 or  email.find('.') == len(email) - 1 \
+			or email.find('@') - email.find('.') < 2:
+			form.username.errors = list(form.username.errors)
+			form.email.errors.append('Email некорректен')
 		if user != []:
 			form.username.errors = list(form.username.errors)
 			form.username.errors.append('Логин занят')
@@ -229,7 +238,7 @@ def reg():
 		session['username'] = username
 		session['class'] = 'YandexLyceumStudent'
 		session['user_id'] = student.id
-		return redirect("/" + session['class'] + "/" + str(session['user_id']))
+		return redirect("/")
 	return render_template('reg.html', title='Авторизация', form=form)
 
 
@@ -262,7 +271,7 @@ def re():
 		session['username'] = username
 		session['class'] = 'YandexLyceumTeacher'
 		session['user_id'] = student.id
-		return redirect("/" + session['class'] + "/" + str(session['user_id']))
+		return redirect("/")
 	return render_template('regteacher.html', title='Авторизация', form=form)
 
 @app.route('/admin', methods=['GET', 'POST'])
@@ -270,7 +279,7 @@ def adm():
 	if 'username' not in session:
 		return redirect('/')
 	if session['class'] != 'Admin' or session['user_id'] != 1:
-		return redirect('/' + session['class'] + '/' + str(session['user_id']))
+		return redirect('/')
 	a = YandexLyceumTeacher.query.all()
 	a = [(YandexLyceumStudent.query.filter_by(teacherid=i.id).all(), i) for i in a]
 	x = []
@@ -303,7 +312,7 @@ def index(s):
 	if 'username' not in session:
 		return redirect('/')
 	if (session['user_id'] != s or session['class'] == 'YandexLyceumTeacher') and not (session['class'] == 'Admin'):
-		return redirect('/' + session['class'] + '/' + str(session['user_id']))
+		return redirect('/')
 	attempts = SolutionAttempt.query.filter_by(student_id=session['user_id']).all()
 	user = YandexLyceumStudent.query.filter_by(id=session['user_id']).first()
 	
@@ -320,7 +329,7 @@ def request(s):
 	if 'username' not in session:
 		return redirect('/login')
 	if session['user_id'] != s or session['class'] != 'YandexLyceumStudent':
-		return redirect('/' + session['class'] + '/' + str(session['user_id']))
+		return redirect('/')
 	form = AddTForm()
 	if form.validate_on_submit():
 		title = form.title.data
@@ -332,7 +341,7 @@ def request(s):
 		user.SolutionAttempts.append(attempt)
 		db.session.commit()
 		content = form.content.data
-		return redirect('/' + session['class'] + '/' + str(session['user_id']))
+		return redirect("/")
 	return render_template('add.html', title='Добавление новости',
 	                       form=form, username=session['username'], inp='file', id=s)
 
@@ -340,7 +349,7 @@ def request(s):
 
 @app.route("/YandexLyceumStudent/<int:s>/tasks/<int:k>/")
 def ta(s, k):
-	return redirect('/' + session['class'] + '/' + str(s) + '/tasks/' + str(k) + '/text')
+	return redirect('/')
 
 
 @app.route("/YandexLyceumStudent/<int:s>/tasks/<int:k>/text", methods=['GET', 'POST'])
@@ -348,7 +357,7 @@ def t(s, k):
 	if 'username' not in session:
 		return redirect('/login')
 	if (session['user_id'] != s or session['class'] != 'YandexLyceumStudent') or session['class'] == 'Admin':
-		return redirect('/' + session['class'] + '/' + str(session['user_id']))
+		return redirect("/")
 	return render_template('task.html', title='Новости', user_id=s, task=SolutionAttempt.query.filter_by(id=k).first())
 
 
@@ -357,7 +366,7 @@ def ter(s):
 	if 'username' not in session:
 		return redirect('/login')
 	if session['user_id'] != s or session['class'] != 'YandexLyceumStudent':
-		return redirect('/' + session['class'] + '/' + str(session['user_id']))
+		return redirect("/")
 	return redirect('/YandexLyceumStudent/' + str(s))
 
 
@@ -366,7 +375,7 @@ def te(s, k):
 	if 'username' not in session:
 		return redirect('/login')
 	if session['user_id'] != s or session['class'] != 'YandexLyceumStudent':
-		return redirect('/' + session['class'] + '/' + str(session['user_id']))
+		return redirect("/")
 	form = Change()
 	if form.validate_on_submit():
 		code = form.code.data
