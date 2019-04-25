@@ -4,6 +4,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, TextAreaField, PasswordField, BooleanField, SelectField, FileField
 from flask_wtf.file import FileRequired, FileAllowed
 from wtforms.validators import DataRequired
+from wtforms.widgets import TextArea
 from werkzeug.utils import secure_filename
 from flask import make_response
 
@@ -130,7 +131,7 @@ class RegisterFormTe(FlaskForm):
 
 class AddTForm(FlaskForm):
 	title = StringField('Задание', validators=[DataRequired()])
-	content = TextAreaField('Код', validators=[DataRequired()])
+	content = TextAreaField('Код', validators=[DataRequired()], render_kw={"rows": 50, "cols": 120})
 	submit = SubmitField('Добавить')
 	
 class AddFForm(FlaskForm):
@@ -167,8 +168,16 @@ def login(classer):
 				session['username'] = user_name
 				session['class'] = 'YandexLyceumStudent'
 				session['user_id'] = a.id
-			return redirect("/")
-		return render_template('login.html', title='Авторизация', form=form)
+				return redirect("/")
+			else:
+				a = YandexLyceumStudent.query.filter_by(username=user_name).all()
+				if a == []:
+					form.username.errors = list(form.username.errors)
+					form.username.errors.append('Пользователь не существует')
+				else:
+					form.password.errors = list(form.password.errors)
+					form.password.errors.append('Пароль не соответствует')
+		return render_template('login.html', title='Авторизация', form=form, classer='student')
 	elif classer == 'admin':
 		form = LoginForm()
 		if form.validate_on_submit():
@@ -181,7 +190,14 @@ def login(classer):
 				session['class'] = 'Admin'
 				session['user_id'] = a.id
 				return redirect("/admin")
-			return redirect("/")
+			else:
+				a = Admin.query.filter_by(username=user_name).all()
+				if a == []:
+					form.username.errors = list(form.username.errors)
+					form.username.errors.append('Пользователь не существует')
+				else:
+					form.password.errors = list(form.password.errors)
+					form.password.errors.append('Пароль не соответствует')
 		return render_template('loginadmin.html', title='Авторизация', form=form)
 	elif classer == 'teacher':
 			form = LoginForm()
@@ -194,8 +210,16 @@ def login(classer):
 					session['username'] = user_name
 					session['class'] = 'YandexLyceumTeacher'
 					session['user_id'] = a.id
-				return redirect("/")
-			return render_template('login.html', title='Авторизация', form=form)
+					return redirect("/")
+				else:
+					a = YandexLyceumTeacher.query.filter_by(username=user_name).all()
+					if a == []:
+						form.username.errors = list(form.username.errors)
+						form.username.errors.append('Пользователь не существует')
+					else:
+						form.password.errors = list(form.password.errors)
+						form.password.errors.append('Пароль не соответствует')
+			return render_template('login.html', title='Авторизация', form=form, classer='teacher')
 
 
 @app.route('/register/student', methods=['GET', 'POST'])
@@ -207,20 +231,22 @@ def reg():
 	if form.validate_on_submit():
 		username = form.username.data
 		password = form.password.data
-		name = form.name.data
-		surname = form.surname.data
+		name = form.name.data[0].upper() + form.name.data[1:].lower()
+		surname = form.surname.data[0].upper() + form.surname.data[1:].lower()
 		email = form.email.data
 		teacher = YandexLyceumTeacher.query.filter_by(id=form.teacher.data).first()
 		year = form.year.data
 		user = YandexLyceumStudent.query.filter_by(username=username).all()
 		if email.find('@') == -1 or email.find('@') == 0 or  email.find('@') == len(email) - 1\
 			or email.find('.') == -1 or email.find('.') == 0 or  email.find('.') == len(email) - 1 \
-			or email.find('@') - email.find('.') < 2:
+			or email.find('.') - email.find('@') < 2:
 			form.username.errors = list(form.username.errors)
 			form.email.errors.append('Email некорректен')
+			return render_template('reg.html', title='Авторизация', form=form)
 		if user != []:
 			form.username.errors = list(form.username.errors)
 			form.username.errors.append('Логин занят')
+			return render_template('reg.html', title='Авторизация', form=form)
 		user = YandexLyceumStudent.query.filter_by(email=email).all()
 		if user != []:
 			form.username.errors = list(form.username.errors)
@@ -239,7 +265,7 @@ def reg():
 		session['class'] = 'YandexLyceumStudent'
 		session['user_id'] = student.id
 		return redirect("/")
-	return render_template('reg.html', title='Авторизация', form=form)
+	return render_template('reg.html', title='Авторизация', form=form, classer='student')
 
 
 @app.route('/register/teacher', methods=['GET', 'POST'])
@@ -248,14 +274,20 @@ def re():
 	if form.validate_on_submit():
 		username = form.username.data
 		password = form.password.data
-		name = form.name.data
-		surname = form.surname.data
+		name = form.name.data[0].upper() + form.name.data[1:].lower()
+		surname = form.surname.data[0].upper() + form.surname.data[1:].lower()
 		email = form.email.data
 		user = YandexLyceumTeacher.query.filter_by(username=username).all()
+		if email.find('@') == -1 or email.find('@') == 0 or  email.find('@') == len(email) - 1\
+			or email.find('.') == -1 or email.find('.') == 0 or  email.find('.') == len(email) - 1 \
+			or email.find('.') - email.find('@') < 2:
+			form.username.errors = list(form.username.errors)
+			form.email.errors.append('Email некорректен')
+			return render_template('reg.html', title='Авторизация', form=form)
 		if user != []:
 			form.username.errors = list(form.username.errors)
 			form.username.errors.append('Логин занят')
-		user = YandexLyceumTeacher.query.filter_by(email=email).all()
+			return render_template('reg.html', title='Авторизация', form=form)
 		if user != []:
 			form.username.errors = list(form.username.errors)
 			form.email.errors.append('Email занят')
@@ -272,7 +304,7 @@ def re():
 		session['class'] = 'YandexLyceumTeacher'
 		session['user_id'] = student.id
 		return redirect("/")
-	return render_template('regteacher.html', title='Авторизация', form=form)
+	return render_template('regteacher.html', title='Авторизация', form=form, classer='teacher')
 
 @app.route('/admin', methods=['GET', 'POST'])
 def adm():
@@ -413,6 +445,7 @@ def indext(s):
 	students = [(SolutionAttempt.query.filter_by(student_id=i.id), i) for i in students]
 	x = []
 	for i in students:
+		r = []
 		s = 0
 		e = 0
 		c = 0
@@ -421,9 +454,10 @@ def indext(s):
 				s += 1
 			elif j.status == 'Check':
 				c += 1
+				r.append(j)
 			else:
 				e += 1
-		x.append([c, s, e, i[1]])
+		x.append([c, s, e, i[1], r])
 	students = x.copy()
 	user = YandexLyceumTeacher.query.filter_by(id=session['user_id']).first()
 	return render_template('indext.html', user=user,

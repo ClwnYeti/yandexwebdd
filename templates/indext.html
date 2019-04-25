@@ -13,6 +13,11 @@
         <p class="alert alert-warning" role="alert">Ждут проверки: {{ i[0] }}</p>
         <p class="alert alert-success" role="alert">Зачтено: {{i[1]}}</p>
         <p class="alert alert-danger" role="alert">На доработку: {{i[2]}}</p>
+     <p class="alert alert-warning" role="alert">Задачи на проверку:</p>
+    {% for j in i[4] %}
+        <p class="alert alert-warning" role="alert">
+            <a href="/YandexLyceumTeacher/{{ user.id }}/students/{{ i[3].id }}/tasks/{{ j.id }}/text" >{{j.task}}</a></p>
+        {% endfor %}
 {% endfor %}
     </div>
 </form>
