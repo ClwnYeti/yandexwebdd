@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+ 
+{% block content %}
+    <h1>Личные сообщения</h1>
+    <h2 class="alert alert-ptimary" role="alert">Собеседник: {{ other.name }} {{ other.surname }}</h2>
+    <form action="" method="post" novalidate>
+    {% for i in k %}
+    <p class="alert alert-light" role="alert">{{ i.who }}: {{ i.message }}</p>
+                {% endfor %}
+        {{ form.hidden_tag() }}
+        <p>
+            {{ form.message.label }}<br>
+            {{ form.message }}<br>
+            {% for error in form.message.errors %}
+                <div class="alert alert-danger" role="alert">
+                    {{ error }}
+                </div>
+            {% endfor %}
+        </p>
+        <p>{{ form.submit() }}</p>
+        <a href="/">На главную</a>>
+    </form>
+{% endblock %}

@@ -6,7 +6,8 @@
         <a href="/logout">Выйти</a>
     <div class="alert alert-dark" role="alert">Имя: {{ user.name }}</div>
     <div class="alert alert-dark" role="alert">Фамилия: {{ user.surname }}</div>
-    <a href="/YandexLyceumStudent/{{id}}/add">Отправить посылку</a>
+    <a href="/YandexLyceumStudent/{{id}}/add">Отправить посылку
+    <a href="/YandexLyceumStudent/{{id}}/add/message">Отправить сообщение учителю</a>
 {% for i in all %}
         {% if i.status == 'OK' %}
             <div class="alert alert-success" role="alert">

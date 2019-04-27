@@ -4,6 +4,7 @@
 <form>
     <h1 class="alert alert-primary" role="alert">Имя: {{ user.name }}</h1>
     <h1 class="alert alert-primary" role="alert">Фамилия: {{ user.surname }}</h1>
+    <a href="/YandexLyceumTeacher/{{ id }}/students/{{ user.id }}/add/message">Отправить сообщение ученику</a>
 {% for i in all %}
         {% if i.status == 'OK' %}
             <div class="alert alert-success" role="alert">

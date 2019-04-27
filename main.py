@@ -75,9 +75,22 @@ class SolutionAttempt(db.Model):
 	                          backref=db.backref('SolutionAttempts',
 	                                             lazy=True))
 	
+	
+class MessageForU(db.Model):
+	id = db.Column(db.Integer, primary_key=True)
+	message = db.Column(db.String(1000), unique=False, nullable=False)
+	student_id = db.Column(db.Integer,
+		                   db.ForeignKey('yandex_lyceum_student.id'),
+		                   nullable=False)
+	student = db.relationship('YandexLyceumStudent',
+		                          backref=db.backref('MessageForU',
+		                                             lazy=True))
+	teacher_id = db.Column(db.Integer, nullable=False)
+	who = db.Column(db.String(50), unique=False, nullable=False)
+	
 	def __repr__(self):
-		return '<SolutionAttempt {} {} {}>'.format(
-			self.id, self.task, self.status)
+		return '<MessageForU {} {} {}>'.format(
+			self.id, self.task, self.student_id)
 	
 
 db.create_all()
@@ -91,13 +104,16 @@ if YandexLyceumTeacher.query.all() == []:
 	db.session.add(admint)
 db.session.commit()
 
+
 class Change(FlaskForm):
 	code = TextAreaField('Код', validators=[DataRequired()])
 	submit = SubmitField('Подтвердить')
 	
+	
 class Task(FlaskForm):
 	code = SelectField('Решение', coerce=int, choices=[(1, 'Зачтено'), (2, 'На доработку')])
 	submit = SubmitField('Подтвердить')
+	
 	
 class LoginForm(FlaskForm):
 	username = StringField('Логин', validators=[DataRequired()])
@@ -116,7 +132,6 @@ class RegisterFormSt(FlaskForm):
 	teacher = SelectField('Учитель', coerce=int, choices=a)
 	year = SelectField('Год', coerce=int, choices=[(1, 'Первый'), (2, 'Второй')])
 	password = PasswordField('Пароль', validators=[DataRequired()])
-	
 	submit = SubmitField('Зарегистрироваться')
 
 
@@ -134,18 +149,27 @@ class AddTForm(FlaskForm):
 	content = TextAreaField('Код', validators=[DataRequired()], render_kw={"rows": 50, "cols": 120})
 	submit = SubmitField('Добавить')
 	
+	
+class Message(FlaskForm):
+	message = TextAreaField('Отправить сообщение', validators=[DataRequired()], render_kw={"rows": 5, "cols": 100})
+	submit = SubmitField('Отправить')
+	
+	
 class AddFForm(FlaskForm):
 	title = StringField('Задание', validators=[DataRequired()])
 	content = FileField('Файл с задачей', validators=[FileRequired()])
 	submit = SubmitField('Добавить')
 	
+	
 class AddPForm(FlaskForm):
 	content = FileField('Картинка', validators=[FileRequired(), FileAllowed(['jpg', 'png'], 'Images only!')])
 	submit = SubmitField('Выбрать')
 
+
 @app.errorhandler(404)
 def not_found(error):
 	return render_template('404.html')
+
 
 @app.route('/')
 @app.route('/main', methods=['GET', 'POST'])
@@ -283,15 +307,15 @@ def re():
 			or email.find('.') - email.find('@') < 2:
 			form.username.errors = list(form.username.errors)
 			form.email.errors.append('Email некорректен')
-			return render_template('reg.html', title='Авторизация', form=form)
+			return render_template('regteacher.html', title='Авторизация', form=form)
 		if user != []:
 			form.username.errors = list(form.username.errors)
 			form.username.errors.append('Логин занят')
-			return render_template('reg.html', title='Авторизация', form=form)
+			return render_template('regteacher.html', title='Авторизация', form=form)
 		if user != []:
 			form.username.errors = list(form.username.errors)
 			form.email.errors.append('Email занят')
-			return render_template('reg.html', title='Авторизация', form=form)
+			return render_template('regteacher.html', title='Авторизация', form=form)
 		student = YandexLyceumTeacher(username=username,
 									  email=email,
 									  name=name,
@@ -305,6 +329,7 @@ def re():
 		session['user_id'] = student.id
 		return redirect("/")
 	return render_template('regteacher.html', title='Авторизация', form=form, classer='teacher')
+
 
 @app.route('/admin', methods=['GET', 'POST'])
 def adm():
@@ -356,6 +381,7 @@ def index(s):
 def ss(s):
 	return redirect('/YandexLyceumStudent/' +str(s) + '/add/text')
 
+
 @app.route('/YandexLyceumStudent/<int:s>/add/text', methods=['GET', 'POST'])
 def request(s):
 	if 'username' not in session:
@@ -378,10 +404,9 @@ def request(s):
 	                       form=form, username=session['username'], inp='file', id=s)
 
 
-
 @app.route("/YandexLyceumStudent/<int:s>/tasks/<int:k>/")
 def ta(s, k):
-	return redirect('/')
+	return redirect(f"/YandexLyceumStudent/{s}/tasks/{k}/text")
 
 
 @app.route("/YandexLyceumStudent/<int:s>/tasks/<int:k>/text", methods=['GET', 'POST'])
@@ -500,6 +525,46 @@ def stt(s, k, f):
 		return redirect('/YandexLyceumTeacher/' + str(s) + '/students/' + str(k))
 	return render_template('taskt.html', title='Новости', user_id=s,
 	                       task=SolutionAttempt.query.filter_by(id=f).first(), form=form)
+
+
+@app.route('/YandexLyceumStudent/<int:s>/add/message', methods=['GET', 'POST'])
+def ms(s):
+	if 'username' not in session:
+		return redirect('/login')
+	if session['user_id'] != s or session['class'] != 'YandexLyceumStudent':
+		return redirect('/')
+	form = Message()
+	a = MessageForU.query.filter_by(student_id=s).all()
+	user = YandexLyceumStudent.query.filter_by(id=s).first()
+	if form.validate_on_submit():
+		data = form.message.data
+		attempt = MessageForU(message=data, teacher_id=user.teacherid, who='S')
+		user.MessageForU.append(attempt)
+		db.session.commit()
+		return redirect(f'/YandexLyceumStudent/{s}/add/message')
+	return render_template('mеssage.html', title='Общение',
+	                       form=form, username=session['username'], inp='file', id=s, k=a,
+	                       other=YandexLyceumTeacher.query.filter_by(id=user.teacherid).first())
+
+
+@app.route('/YandexLyceumTeacher/<int:s>/students/<int:k>/add/message', methods=['GET', 'POST'])
+def mt(s, k):
+	if 'username' not in session:
+		return redirect('/login')
+	if session['user_id'] != s or session['class'] != 'YandexLyceumTeacher':
+		return redirect('/')
+	form = Message()
+	a = MessageForU.query.filter_by(student_id=s).all()
+	student = YandexLyceumStudent.query.filter_by(id=k).first()
+	if form.validate_on_submit():
+		data = form.message.data
+		attempt = MessageForU(message=data, teacher_id=s, who='T')
+		student.MessageForU.append(attempt)
+		db.session.commit()
+		return redirect(f'/YandexLyceumTeacher/{s}/students/{k}/add/message')
+	return render_template('mеssage.html', title='Общение',
+	                       form=form, username=session['username'], inp='file', id=s, k=a,
+	                       other=student)
 
 
 if __name__ == '__main__':

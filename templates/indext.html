@@ -10,6 +10,8 @@
 {% for i in all %}
         <h2 class="alert alert-dark" role="alert"> <a href="/YandexLyceumTeacher/{{ user.id }}/students/{{ i[3].id }}">
             {{ i[3].name }} {{ i[3].surname }}</a></h2>
+        <a href="/YandexLyceumTeacher/{{ user.id }}/students/{{ i[3].id }}/add/message">
+            Отправить сообщение ученику</a>
         <p class="alert alert-warning" role="alert">Ждут проверки: {{ i[0] }}</p>
         <p class="alert alert-success" role="alert">Зачтено: {{i[1]}}</p>
         <p class="alert alert-danger" role="alert">На доработку: {{i[2]}}</p>
