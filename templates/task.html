@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 
 {% block content %}
-<form>
-
+<form action="" method="post" novalidate>
+{{ form2.hidden_tag() }}
         {% if task.status == 'OK' %}
             <div class="alert alert-success" role="alert">
                 <h1>Задание {{ task.task }}!</h1>
@@ -23,5 +23,19 @@
         {% endif %}
         <p><a href="/YandexLyceumStudent/{{ user_id}}/tasks/{{ task.id }}/change/text">Изменить</a></p>
         <p><a href="/YandexLyceumStudent/{{ user_id}}/tasks/{{ task.id }}/delete">Удалить</a></p>
+    <div class="alert alert-dark" role="alert">Комментарии:
+    {% for i in k %}
+    <p class="alert alert-light" role="alert">{{ i.who }}: {{ i.message }}</p>
+                {% endfor %}   </div>
+        <p>
+            {{ form2.message.label }}<br>
+            {{ form2.message }}<br>
+            {% for error in form2.message.errors %}
+                <div class="alert alert-danger" role="alert">
+                    {{ error }}
+                </div>
+            {% endfor %}
+        </p>
+        <p>{{ form2.submit1() }}</p>
 </form>
 {% endblock %}

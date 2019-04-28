@@ -31,5 +31,23 @@
                     {% endfor %}
                     </div>
         <p>{{ form.submit() }}</p>
-    </form>
+</form>
+    <form action="" method="post" novalidate>
+    <div class="alert alert-dark" role="alert">Комментарии:
+    {% for i in k %}
+    <p class="alert alert-light" role="alert">{{ i.who }}: {{ i.message }}</p>
+                {% endfor %}
+        {{ form2.hidden_tag() }}
+        <p>
+            {{ form2.message.label }}<br>
+            {{ form2.message }}<br>
+            {% for error in form2.message.errors %}
+                <div class="alert alert-danger" role="alert">
+                    {{ error }}
+                </div>
+            {% endfor %}
+        </p>
+        <p>{{ form2.submit1() }}</p>
+    </div>
+   </form>
 {% endblock %}

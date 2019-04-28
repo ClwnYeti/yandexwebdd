@@ -75,6 +75,10 @@ class SolutionAttempt(db.Model):
 	                          backref=db.backref('SolutionAttempts',
 	                                             lazy=True))
 	
+	def __repr__(self):
+		return '<SolutionAttemp {} {} {}>'.format(
+			self.id, self.task, self.status)
+	
 	
 class MessageForU(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
@@ -90,7 +94,27 @@ class MessageForU(db.Model):
 	
 	def __repr__(self):
 		return '<MessageForU {} {} {}>'.format(
-			self.id, self.task, self.student_id)
+			self.id, self.student.username, self.student_id)
+
+
+class MessageForTask(db.Model):
+	id = db.Column(db.Integer, primary_key=True)
+	message = db.Column(db.String(1000), unique=False, nullable=False)
+	student_id = db.Column(db.Integer,
+	                       db.ForeignKey('yandex_lyceum_student.id'),
+	                       nullable=False)
+	task = db.relationship('SolutionAttempt',
+	                          backref=db.backref('MessageForTask',
+	                                             lazy=True))
+	task_id = db.Column(db.Integer,
+	                       db.ForeignKey('solution_attempt.id'),
+	                       nullable=False)
+	teacher_id = db.Column(db.Integer, nullable=False)
+	who = db.Column(db.String(50), unique=False, nullable=False)
+	
+	def __repr__(self):
+		return '<MessageForTask {} {} {}>'.format(
+			self.id, self.task.task, self.task_id)
 	
 
 db.create_all()
@@ -106,7 +130,7 @@ db.session.commit()
 
 
 class Change(FlaskForm):
-	code = TextAreaField('Код', validators=[DataRequired()])
+	code = TextAreaField('Код', validators=[DataRequired()], render_kw={"rows": 50, "cols": 120})
 	submit = SubmitField('Подтвердить')
 	
 	
@@ -152,7 +176,7 @@ class AddTForm(FlaskForm):
 	
 class Message(FlaskForm):
 	message = TextAreaField('Отправить сообщение', validators=[DataRequired()], render_kw={"rows": 5, "cols": 100})
-	submit = SubmitField('Отправить')
+	submit1 = SubmitField('Отправить')
 	
 	
 class AddFForm(FlaskForm):
@@ -415,7 +439,17 @@ def t(s, k):
 		return redirect('/login')
 	if (session['user_id'] != s or session['class'] != 'YandexLyceumStudent') or session['class'] == 'Admin':
 		return redirect("/")
-	return render_template('task.html', title='Новости', user_id=s, task=SolutionAttempt.query.filter_by(id=k).first())
+	form2 = Message()
+	a = MessageForTask.query.filter_by(task_id=k).all()
+	user = YandexLyceumStudent.query.filter_by(id=s).first()
+	task = SolutionAttempt.query.filter_by(id=k).first()
+	if form2.validate_on_submit():
+		data = form2.message.data
+		attempt = MessageForTask(message=data, teacher_id=user.teacherid, who='S', student_id=s)
+		task.MessageForTask.append(attempt)
+		db.session.commit()
+		return redirect(f'/YandexLyceumStudent/{s}/tasks/{k}/text')
+	return render_template('task.html', title='Новости', user_id=s, task=task, k=a, form2=form2)
 
 
 @app.route("/YandexLyceumStudent/<int:s>/tasks")
@@ -437,11 +471,17 @@ def te(s, k):
 	if form.validate_on_submit():
 		code = form.code.data
 		a = SolutionAttempt.query.filter_by(id=k).first()
+		f = MessageForTask.query.filter_by(task_id=k).all()
 		user = YandexLyceumStudent.query.filter_by(id=s).first()
 		attempt = SolutionAttempt(task=a.task,
 		                          code=code,
 		                          status='Check')
 		user.SolutionAttempts.append(attempt)
+		for i in f:
+			r = MessageForTask(message=i.message, student_id=i.student_id, teacher_id=i.teacher_id, who=i.who)
+			attempt.MessageForTask.append(r)
+		for i in f:
+			db.session.delete(i)
 		db.session.delete(a)
 		db.session.commit()
 		return redirect('/' + session['class'] + '/' + str(session['user_id']))
@@ -454,6 +494,9 @@ def terk(s, k):
 		return redirect('/login')
 	if session['user_id'] != s or session['class'] != 'YandexLyceumStudent':
 		return redirect('/' + session['class'] + '/' + str(session['user_id']))
+	f = MessageForTask.query.filter_by(task_id=k).all()
+	for i in f:
+		db.session.delete(i)
 	a = SolutionAttempt.query.filter_by(id=k).first()
 	db.session.delete(a)
 	db.session.commit()
@@ -510,7 +553,8 @@ def stt(s, k, f):
 	form = Task()
 	if form.validate_on_submit():
 		a = SolutionAttempt.query.filter_by(id=f).first()
-		db.session.delete(a)
+		user = YandexLyceumStudent.query.filter_by(id=s).first()
+
 		c = SolutionAttempt()
 		b = YandexLyceumStudent.query.filter_by(id=k).first()
 		if form.code.data == 1:
@@ -521,10 +565,27 @@ def stt(s, k, f):
 			a.status = 'Error'
 			c = SolutionAttempt(task=a.task, status=a.status, code=a.code)
 			b.SolutionAttempts.append(c)
+		f = MessageForTask.query.filter_by(task_id=f).all()
+		for i in f:
+			r = MessageForTask(message=i.message, student_id=i.student_id, teacher_id=i.teacher_id, who=i.who)
+			c.MessageForTask.append(r)
+		for i in f:
+			db.session.delete(i)
+		db.session.delete(a)
 		db.session.commit()
 		return redirect('/YandexLyceumTeacher/' + str(s) + '/students/' + str(k))
+	form2 = Message()
+	a = MessageForTask.query.filter_by(task_id=f).all()
+	user = YandexLyceumStudent.query.filter_by(id=k).first()
+	task = SolutionAttempt.query.filter_by(id=f).first()
+	if form2.validate_on_submit():
+		data = form2.message.data
+		attempt = MessageForTask(message=data, teacher_id=s, who='T', student_id=k)
+		task.MessageForTask.append(attempt)
+		db.session.commit()
+		return redirect(f'/YandexLyceumTeacher/{s}/students/{k}/tasks/{f}/text')
 	return render_template('taskt.html', title='Новости', user_id=s,
-	                       task=SolutionAttempt.query.filter_by(id=f).first(), form=form)
+	                       task=task, form=form, k=a, form2=form2)
 
 
 @app.route('/YandexLyceumStudent/<int:s>/add/message', methods=['GET', 'POST'])
